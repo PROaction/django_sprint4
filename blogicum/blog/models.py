@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 
 from blogicum.settings import MAX_LENGTH
 
@@ -63,7 +64,7 @@ class Post(BaseModel):
     title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
     text = models.TextField(verbose_name='Текст')
     pub_date = models.DateTimeField(
-        auto_now=True,
+        default=timezone.now,
         verbose_name='Дата и время публикации',
         help_text='Если установить дату и время в будущем — '
                   'можно делать отложенные публикации.')
@@ -78,12 +79,33 @@ class Post(BaseModel):
                                  on_delete=models.SET_NULL,
                                  null=True,
                                  verbose_name='Категория')
+    image = models.ImageField(upload_to="image/%Y/%m/%d/", verbose_name="Картинка", null=True)
 
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         default_related_name = 'posts'
-        ordering = ('pub_date',)
+        ordering = ('-pub_date',)
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'id': self.pk})
+
+
+class Comment(models.Model):
+    text = models.TextField('Текст комментария')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='пост',
+    )
+    created_at = models.DateTimeField(auto_now_add=True,
+                                      verbose_name='Добавлено',
+                                      )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        ordering = ('created_at',)
