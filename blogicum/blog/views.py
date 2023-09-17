@@ -8,18 +8,20 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic.list import MultipleObjectMixin
 
 from .forms import PostForm, CommentForm
 from .models import Category, Post, Comment
 
 
+ELEMS_PER_PAGE = 2
 User = get_user_model()
+
 
 class IndexListView(ListView):
     model = Post
     template_name = 'blog/index.html'
-    ordering = 'id'
-    paginate_by = 10
+    paginate_by = ELEMS_PER_PAGE
 
     def get_queryset(self):
         return Post.objects.select_related(
@@ -36,20 +38,21 @@ class IndexListView(ListView):
         return context
 
 
-class CategoryDetailView(DetailView):
+class CategoryDetailView(DetailView, MultipleObjectMixin):
     model = Category
     template_name = 'blog/category.html'
-    context_object_name = 'category'
     slug_url_kwarg = 'category_slug'
+    context_object_name = 'category'
+    paginate_by = ELEMS_PER_PAGE
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_obj'] = Post.objects.select_related(
+        object_list = Post.objects.select_related(
             'category'
         ).filter(is_published=True,
                  category__is_published=True,
                  pub_date__lte=datetime.now(),
                  )
+        context = super().get_context_data(object_list=object_list, **kwargs)
         return context
 
 
@@ -68,8 +71,6 @@ class PostDetailView(DetailView):
 class PostDeleteView(DeleteView):
     model = Post
     template_name = 'blog/create_post.html'
-
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -107,18 +108,19 @@ class PostUpdateView(UpdateView):
         return reverse_lazy('blog:post_detail', args=[self.kwargs['pk']])
 
 
-class ProfileDetailView(DetailView):
+class ProfileDetailView(DetailView, MultipleObjectMixin):
     model = User
     template_name = 'blog/profile.html'
     slug_url_kwarg = 'username_slug'
     context_object_name = 'profile'
+    paginate_by = ELEMS_PER_PAGE
 
     def get_object(self, queryset=None):
         return User.objects.get(username=self.kwargs['username_slug'])
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_obj'] = Post.objects.filter(author__username=self.kwargs['username_slug'])
+        object_list = Post.objects.filter(author__username=self.kwargs['username_slug'])
+        context = super().get_context_data(object_list=object_list, **kwargs)
         return context
 
 

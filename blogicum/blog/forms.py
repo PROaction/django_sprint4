@@ -13,9 +13,12 @@ class PostForm(forms.ModelForm):
             'location',
             'category',
             'pub_date',
+            'is_published',
         ]
         widgets = {
-            'text': forms.Textarea(attrs={'col': 60, 'row': 10})
+            'text': forms.Textarea(attrs={'col': 60, 'row': 10}),
+            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+
         }
 
 
