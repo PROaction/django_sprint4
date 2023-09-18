@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-s!hinu=tlx%9zqvyc1e6j4a7*4=^9(^_s*p&_y1g=#t5e*js=r'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -107,7 +107,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = False
+USE_L10N = True
 
 USE_TZ = True
 
@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MAX_LENGTH = 256
 
-CSRF_FAILURE_VIEW = 'core.views.permission_denied'
+CSRF_FAILURE_VIEW = 'pages.views.permission_denied'
 
 LOGIN_REDIRECT_URL = 'blog:index'
 
