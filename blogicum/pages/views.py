@@ -6,6 +6,7 @@ from django.views.generic import TemplateView
 class TemplateAboutView(TemplateView):
     template_name = 'pages/about.html'
 
+
 class TemplateRulesView(TemplateView):
     template_name = 'pages/rules.html'
 
@@ -20,6 +21,7 @@ def server_error(request):
 
 def permission_denied(request, reason=''):
     return render(request, 'pages/403csrf.html', status=403)
+
 
 def about(request: HttpRequest) -> HttpResponse:
     """View-функция для инфо."""

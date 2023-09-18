@@ -79,7 +79,9 @@ class Post(BaseModel):
                                  on_delete=models.SET_NULL,
                                  null=True,
                                  verbose_name='Категория')
-    image = models.ImageField(upload_to="image/%Y/%m/%d/", verbose_name="Картинка", null=True)
+    image = models.ImageField(upload_to="image/%Y/%m/%d/",
+                              verbose_name="Картинка",
+                              null=True)
 
     class Meta:
         verbose_name = 'публикация'
