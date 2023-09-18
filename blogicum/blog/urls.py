@@ -10,15 +10,19 @@ urlpatterns = [
     path('posts/<int:post_id>/',
          views.PostDetailView.as_view(),
          name='post_detail'),
-    path('posts/<int:post_id>/edit/',
-         views.PostUpdateView.as_view(),
-         name='edit_post'),
+    path(
+        'posts/<int:post_id>/edit/',
+        views.PostUpdateView.as_view(),
+        name='edit_post'
+    ),
     path('posts/<int:post_id>/delete/',
          views.PostDeleteView.as_view(),
          name='delete_post'),
-    path('profile/<slug:username_slug>/',
-         views.ProfileDetailView.as_view(),
-         name='profile'),
+    path(
+        'profile/<slug:username_slug>/',
+        views.ProfileDetailView.as_view(),
+        name='profile'
+    ),
     path('edit_profile/',
          views.ProfileUpdateView.as_view(),
          name='edit_profile'),
