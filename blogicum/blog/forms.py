@@ -1,21 +1,28 @@
-from blog.models import Comment, Post
 from django import forms
+
+from blog.models import Comment, Post
+
 
 
 class PostForm(forms.ModelForm):
+
     class Meta:
         model = Post
-        fields = [
+        fields = (
             'title',
             'text',
             'image',
             'location',
             'category',
             'pub_date',
-        ]
+            'is_published',
+        )
         widgets = {
             'text': forms.Textarea(attrs={'col': 60, 'row': 10}),
-            'pub_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'pub_date': forms.DateTimeInput(
+                format='%Y-%m-%d %H:%M:%S',
+                attrs={'type': 'datetime-local'}
+            ),
 
         }
 

@@ -5,19 +5,22 @@ from django.utils import timezone
 
 from blogicum.settings import MAX_LENGTH
 
+COUNT_SYMBOLS_FOR_TITLE_MODEL = 31
 User = get_user_model()
 
 
 class BaseModel(models.Model):
     """Базовая модель с флагом публикуемости и временем создания."""
 
-    is_published = models.BooleanField(default=True,
-                                       verbose_name='Опубликовано',
-                                       help_text='Снимите галочку, '
-                                                 'чтобы скрыть публикацию.')
-    created_at = models.DateTimeField(auto_now_add=True,
-                                      verbose_name='Добавлено',
-                                      )
+    is_published = models.BooleanField(
+        default=True,
+        verbose_name='Опубликовано',
+        help_text='Снимите галочку, чтобы скрыть публикацию.'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+    )
 
     class Meta:
         abstract = True
@@ -36,7 +39,7 @@ class Location(BaseModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name
+        return self.name[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
 
 
 class Category(BaseModel):
@@ -44,18 +47,21 @@ class Category(BaseModel):
 
     title = models.CharField(max_length=MAX_LENGTH, verbose_name='Заголовок')
     description = models.TextField(verbose_name='Описание')
-    slug = models.SlugField(unique=True,
-                            verbose_name='Идентификатор',
-                            help_text='Идентификатор страницы для URL; '
-                                      'разрешены символы латиницы, цифры, '
-                                      'дефис и подчёркивание.')
+    slug = models.SlugField(
+        unique=True,
+        verbose_name='Идентификатор',
+        help_text=(
+            'Идентификатор страницы для URL; '
+            'разрешены символы латиницы, цифры, дефис и подчёркивание.'
+        )
+    )
 
     class Meta:
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title
+        return self.title[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
 
 
 class Post(BaseModel):
@@ -66,22 +72,37 @@ class Post(BaseModel):
     pub_date = models.DateTimeField(
         default=timezone.now,
         verbose_name='Дата и время публикации',
-        help_text='Если установить дату и время в будущем — '
-                  'можно делать отложенные публикации.')
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
-                               verbose_name='Автор публикации')
-    location = models.ForeignKey(Location,
-                                 on_delete=models.SET_NULL,
-                                 null=True,
-                                 blank=True,
-                                 verbose_name='Местоположение')
-    category = models.ForeignKey(Category,
-                                 on_delete=models.SET_NULL,
-                                 null=True,
-                                 verbose_name='Категория')
-    image = models.ImageField(upload_to="image/%Y/%m/%d/",
-                              verbose_name="Картинка",
-                              null=True)
+        help_text=(
+            'Если установить дату и время в будущем '
+            '— можно делать отложенные публикации.'
+        )
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор публикации'
+    )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Местоположение'
+    )
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Категория'
+    )
+    image = models.ImageField(
+        upload_to="image/%Y/%m/%d/",
+        verbose_name="Картинка",
+        null=True
+    )
+
+    def __str__(self):
+        return self.title[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
 
     class Meta:
         verbose_name = 'публикация'
@@ -101,13 +122,20 @@ class Comment(models.Model):
         related_name='comments',
         verbose_name='пост',
     )
-    created_at = models.DateTimeField(auto_now_add=True,
-                                      verbose_name='Добавлено',
-                                      )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Добавлено',
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name='authors',
     )
 
     class Meta:
         ordering = ('created_at',)
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:COUNT_SYMBOLS_FOR_TITLE_MODEL]

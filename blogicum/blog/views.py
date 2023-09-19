@@ -3,9 +3,11 @@ from datetime import datetime
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 from django.views.generic.list import MultipleObjectMixin
@@ -28,12 +30,7 @@ class IndexListView(ListView):
             is_published=True,
             category__is_published=True,
             pub_date__lte=datetime.now(),
-        )
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(**kwargs)
-        print(context)
-        return context
+        ).annotate(comment_count=Count("comments"))
 
 
 class CategoryDetailView(DetailView, MultipleObjectMixin):
@@ -55,7 +52,7 @@ class CategoryDetailView(DetailView, MultipleObjectMixin):
                  category__is_published=True,
                  category__slug=self.kwargs['category_slug'],
                  pub_date__lte=datetime.now(),
-                 )
+                 ).annotate(comment_count=Count("comments"))
         context = super().get_context_data(object_list=object_list, **kwargs)
         return context
 
@@ -67,8 +64,9 @@ class PostDetailView(DetailView):
     context_object_name = 'post'
 
     def dispatch(self, request, *args, **kwargs):
-        print(self.get_object().pub_date.timestamp())
-        print(datetime.now().timestamp())
+        print(self.get_object().pub_date)
+        print('datetime.now():', datetime.now())
+        print('timezone.now()', timezone.now())
         if self.get_object().author != request.user:
             if (self.get_object().pub_date.timestamp()
                     > datetime.now().timestamp()
