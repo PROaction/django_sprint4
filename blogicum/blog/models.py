@@ -93,7 +93,8 @@ class Post(BaseModel):
         Category,
         on_delete=models.SET_NULL,
         null=True,
-        verbose_name='Категория'
+        verbose_name='Категория',
+        related_name='posts'
     )
     image = models.ImageField(
         upload_to="image/%Y/%m/%d/",
@@ -111,7 +112,7 @@ class Post(BaseModel):
         ordering = ('-pub_date',)
 
     def get_absolute_url(self):
-        return reverse('blog:post_detail', kwargs={'id': self.pk})
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
 
 
 class Comment(models.Model):
@@ -129,7 +130,7 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='authors',
+        related_name='comments',
     )
 
     class Meta:
