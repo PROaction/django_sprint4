@@ -1,58 +1,37 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.db.models import Count
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
 from .forms import CommentForm, PostForm
+from .mixins import CommentMixin, PostMixin, PostsMixin
 from .models import Category, Comment, Post, User
-from .mixins import CommentMixin, PostsMixin, PostMixin
 
 
 class IndexListView(PostsMixin, ListView):
     template_name = 'blog/index.html'
 
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=timezone.now(),
-        )
-
 
 class CategoryListView(PostsMixin, ListView):
     template_name = 'blog/category.html'
-    category = None
+    category_obj = None
 
     def get_queryset(self):
-        category_obj = get_object_or_404(
+        self.category_obj = get_object_or_404(
             Category,
             slug=self.kwargs['category_slug'],
             is_published=True,
         )
-        category = category_obj.posts.select_related(
-            'category', 'location', 'author'
-        ).filter(
-            is_published=True,
-            pub_date__lte=timezone.now(),
-        ).order_by('-pub_date').annotate(comment_count=Count("comments"))
-        return category
+        return super().get_queryset().filter(category=self.category_obj)
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=None, **kwargs)
-        context['category'] = Category.objects.get(
-            slug=self.kwargs['category_slug']
-        )
-        cat_obj = Category.objects.get(
-            slug=self.kwargs['category_slug']
-        )
-        print(type(cat_obj))
-        print(type(self.category), self.category)
+        context['category'] = self.category_obj
         return context
 
 
@@ -101,7 +80,7 @@ class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
 class PostDeleteView(LoginRequiredMixin, PostMixin, DeleteView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['form'] = PostForm()
+        context['form'] = PostForm(instance=self.object)
         return context
 
     def get_success_url(self):
@@ -119,7 +98,7 @@ class ProfileListView(PostsMixin, ListView):
             username=self.kwargs['username_slug']
         )
         if self.current_user.username == self.kwargs['username_slug']:
-            return posts.filter(
+            return self.all_posts().filter(
                 author__username=self.kwargs['username_slug'],
             )
         else:

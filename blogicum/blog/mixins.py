@@ -1,7 +1,9 @@
-from blog.models import Comment, Post
 from django.db.models import Count
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
+
+from blog.models import Comment, Post
 
 
 class PostsMixin:
@@ -9,10 +11,17 @@ class PostsMixin:
     paginate_by = 10
     pk_url_kwarg = 'post_id'
 
-    def get_queryset(self):
+    def all_posts(self):
         return self.model.objects.select_related(
             'category', 'author', 'location'
         ).order_by('-pub_date').annotate(comment_count=Count('comments'))
+
+    def get_queryset(self):
+        return self.all_posts().filter(
+            is_published=True,
+            category__is_published=True,
+            pub_date__lte=timezone.now(),
+        )
 
 
 class PostMixin:
