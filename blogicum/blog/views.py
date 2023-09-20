@@ -11,44 +11,48 @@ from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
 
 from .forms import CommentForm, PostForm
 from .models import Category, Comment, Post, User
-from .utils import CommentMixin, PostMixin
-
-ELEMS_PER_PAGE = 10
+from .mixins import CommentMixin, PostsMixin, PostMixin
 
 
-class IndexListView(PostMixin, ListView):
+class IndexListView(PostsMixin, ListView):
     template_name = 'blog/index.html'
 
     def get_queryset(self):
-        posts = super().get_queryset()
-        return posts.filter(
+        return super().get_queryset().filter(
             is_published=True,
             category__is_published=True,
             pub_date__lte=timezone.now(),
         )
 
 
-class CategoryListView(PostMixin, ListView):
+class CategoryListView(PostsMixin, ListView):
     template_name = 'blog/category.html'
+    category = None
 
     def get_queryset(self):
-        cat_obj = get_object_or_404(
+        category_obj = get_object_or_404(
             Category,
             slug=self.kwargs['category_slug'],
             is_published=True,
         )
-        return cat_obj.posts.select_related(
+        category = category_obj.posts.select_related(
             'category', 'location', 'author'
         ).filter(
             is_published=True,
             pub_date__lte=timezone.now(),
         ).order_by('-pub_date').annotate(comment_count=Count("comments"))
+        return category
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(object_list=None, **kwargs)
         context['category'] = Category.objects.get(
             slug=self.kwargs['category_slug']
         )
+        cat_obj = Category.objects.get(
+            slug=self.kwargs['category_slug']
+        )
+        print(type(cat_obj))
+        print(type(self.category), self.category)
         return context
 
 
@@ -78,27 +82,6 @@ class PostDetailView(DetailView):
         return context
 
 
-class PostDeleteView(LoginRequiredMixin, DeleteView):
-    model = Post
-    pk_url_kwarg = 'post_id'
-    template_name = 'blog/create_post.html'
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.get_object().author != request.user:
-            return redirect(
-                'blog:post_detail',
-                post_id=self.kwargs['post_id']
-            )
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = PostForm
-
-    def get_success_url(self):
-        return reverse('blog:profile', args=[self.request.user.username])
-
-
 class PostCreateView(LoginRequiredMixin, CreateView):
     form_class = PostForm
     template_name = 'blog/create_post.html'
@@ -111,37 +94,45 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class PostUpdateView(LoginRequiredMixin, UpdateView):
-    model = Post
+class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
     form_class = PostForm
-    template_name = 'blog/create_post.html'
-    pk_url_kwarg = 'post_id'
-
-    def dispatch(self, request, *args, **kwargs):
-        if self.get_object().author != request.user:
-            return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
 
 
-class ProfileListView(PostMixin, ListView):
+class PostDeleteView(LoginRequiredMixin, PostMixin, DeleteView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = PostForm()
+        return context
+
+    def get_success_url(self):
+        return reverse('blog:profile', args=[self.request.user.username])
+
+
+class ProfileListView(PostsMixin, ListView):
     template_name = 'blog/profile.html'
+    current_user = None
 
     def get_queryset(self):
         posts = super().get_queryset()
-        return posts.filter(
-            author__username=self.kwargs['username_slug'],
-        )
-
-    def get_context_data(self, *, object_list=None, **kwargs):
-        context = super().get_context_data(object_list=None, **kwargs)
-        context['profile'] = get_object_or_404(
+        self.current_user = get_object_or_404(
             User,
             username=self.kwargs['username_slug']
         )
+        if self.current_user.username == self.kwargs['username_slug']:
+            return posts.filter(
+                author__username=self.kwargs['username_slug'],
+            )
+        else:
+            return posts.filter(
+                author__username=self.kwargs['username_slug'],
+                is_published=True,
+                category__is_published=True,
+                pub_date__lte=timezone.now(),
+            )
+
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(object_list=None, **kwargs)
+        context['profile'] = self.current_user
         return context
 
 

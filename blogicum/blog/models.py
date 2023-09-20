@@ -94,7 +94,6 @@ class Post(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Категория',
-        related_name='posts'
     )
     image = models.ImageField(
         upload_to="image/%Y/%m/%d/",
@@ -102,14 +101,14 @@ class Post(BaseModel):
         null=True
     )
 
-    def __str__(self):
-        return self.title[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
-
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
         default_related_name = 'posts'
         ordering = ('-pub_date',)
+
+    def __str__(self):
+        return self.title[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.pk})
@@ -139,4 +138,8 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:COUNT_SYMBOLS_FOR_TITLE_MODEL]
+        return (
+            f'{str(self.author)}: '
+            f'{str(self.post)[:10]}, '
+            f'{self.text[:15]}'
+        )
