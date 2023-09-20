@@ -21,5 +21,3 @@ class LocationAmin(admin.ModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     pass
-
-
