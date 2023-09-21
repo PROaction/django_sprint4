@@ -97,16 +97,13 @@ class ProfileListView(PostsMixin, ListView):
             User,
             username=self.kwargs['username_slug']
         )
-        if self.current_user.username == self.kwargs['username_slug']:
+        if self.request.user.username == self.kwargs['username_slug']:
             return self.all_posts().filter(
                 author__username=self.kwargs['username_slug'],
             )
         else:
-            return posts.filter(
+            return super().get_queryset().filter(
                 author__username=self.kwargs['username_slug'],
-                is_published=True,
-                category__is_published=True,
-                pub_date__lte=timezone.now(),
             )
 
     def get_context_data(self, *, object_list=None, **kwargs):

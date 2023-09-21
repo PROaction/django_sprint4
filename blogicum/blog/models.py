@@ -6,6 +6,8 @@ from django.utils import timezone
 from blogicum.settings import MAX_LENGTH
 
 COUNT_SYMBOLS_FOR_TITLE_MODEL = 31
+POST_TITLE_LEN = 10
+COMMENT_TEXT_LEN = 15
 User = get_user_model()
 
 
@@ -140,6 +142,6 @@ class Comment(models.Model):
     def __str__(self):
         return (
             f'{str(self.author)}: '
-            f'{str(self.post)[:10]}, '
-            f'{self.text[:15]}'
+            f'{str(self.post)[:POST_TITLE_LEN]}, '
+            f'{self.text[:COMMENT_TEXT_LEN]}'
         )
