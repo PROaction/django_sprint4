@@ -92,7 +92,6 @@ class ProfileListView(PostsMixin, ListView):
     current_user = None
 
     def get_queryset(self):
-        posts = super().get_queryset()
         self.current_user = get_object_or_404(
             User,
             username=self.kwargs['username_slug']
